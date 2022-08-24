@@ -28,6 +28,16 @@ public:
 			return true;
 		return false;
 	}
+	bool operator >= (Point* p) {
+		if ((x >= p->x) && (y >= p->y))
+			return true;
+		return false;
+	}
+	bool operator <= (Point* p) {
+		if ((x <= p->x) && (y <= p->y))
+			return true;
+		return false;
+	}
 	bool operator == (Point* p) {
 		if ((x = p->x) && (y = p->y))
 			return true;
@@ -156,30 +166,26 @@ public:
 	}
 	bool checkCollision(Point *p) {
 		Polygon* poly = getBoundary();
-		if (poly->getX() < p->x && poly->getX() + poly->getWidth() > p->x && poly->getY() < p->y && poly->getY() + poly->getHeight() > p->y)
+		if (poly->getX() <= p->x && poly->getX() + poly->getWidth() >= p->x && poly->getY() <= p->y && poly->getY() + poly->getHeight() >= p->y)
 			return true;
 		return false;
 	}
 	bool checkCollision(Polygon *range) {
-		Point *rlt = range->getLeftTop();
-		Point *rlb = range->getLeftBot();
-		Point *rrt = range->getRightTop();
-		Point *rrb = range->getRightBot();
-		if ((boundary->getX() < rlt->x && boundary->getX() + boundary->getWidth() > rlt->x && boundary->getY() < rlt->y && boundary->getY() + boundary->getHeight() > rlt->y) ||
-			(boundary->getX() < rlb->x && boundary->getX() + boundary->getWidth() > rlb->x && boundary->getY() < rlb->y && boundary->getY() + boundary->getHeight() > rlb->y) ||
-			(boundary->getX() < rrt->x && boundary->getX() + boundary->getWidth() > rrt->x && boundary->getY() < rrt->y && boundary->getY() + boundary->getHeight() > rrt->y) ||
-			(boundary->getX() < rrb->x && boundary->getX() + boundary->getWidth() > rrb->x && boundary->getY() < rrb->y && boundary->getY() + boundary->getHeight() > rrb->y))
+		if (boundary->getLeftTop() <= range->getLeftTop() ||
+			(boundary->getX() + boundary->getWidth()) >= range->getLeftBot()->x ||
+			(boundary->getY() + boundary->getHeight()) >= range->getRightTop()->y ||
+			boundary->getRightBot() >= range->getRightBot())
 			return true;
-		if ((boundary->getX() < blt->x && boundary->getX() + boundary->getWidth() > blt->x && boundary->getY() < blt->y && boundary->getY() + boundary->getHeight() > blt->y) ||
-			(boundary->getX() < blb->x && boundary->getX() + boundary->getWidth() > blb->x && boundary->getY() < blb->y && boundary->getY() + boundary->getHeight() > blb->y) ||
-			(boundary->getX() < brt->x && boundary->getX() + boundary->getWidth() > brt->x && boundary->getY() < brt->y && boundary->getY() + boundary->getHeight() > brt->y) ||
-			(boundary->getX() < brb->x && boundary->getX() + boundary->getWidth() > brb->x && boundary->getY() < brb->y && boundary->getY() + boundary->getHeight() > brb->y))
+		if (range->getLeftTop() <= boundary->getLeftTop() ||
+			(range->getX() + range->getWidth()) >= boundary->getLeftBot()->x ||
+			(range->getY() + range->getHeight()) >= boundary->getRightTop()->y ||
+			range->getRightBot() >= boundary->getRightBot())
 			return true;
 
 		return false;
 	}
 	bool checkCollision(Polygon* range, Point *p) {
-		if (range->getX() < p->x && range->getX() + range->getWidth() > p->x && range->getY() < p->y && range->getY() + range->getHeight() > p->y)
+		if (range->getX() <= p->x && range->getX() + range->getWidth() >= p->x && range->getY() <= p->y && range->getY() + range->getHeight() >= p->y)
 			return true;
 		return false;
 	}
@@ -218,7 +224,7 @@ public:
 			}	
 		}
 	}
-	void query(Polygon* range, map<int, int> *res) {
+	void query(Polygon* range, multimap<int, int> *res) {
 		if (!checkCollision(range))
 			return;
 		vector<Point*>::iterator pvIt = obj->begin();
@@ -274,8 +280,8 @@ void insertPoly2QTree(QTree *qt, vector<Polygon*> *pv) {
 	cout << "================================" << endl;
 }
 
-void showResults( map <int, int> *res) {
-	map<int, int>::iterator mit = res->begin();
+void showResults( multimap <int, int> *res) {
+	multimap<int, int>::iterator mit = res->begin();
 	for (; mit != res->end(); mit++)
 		cout << "Point( " << mit->first << " " << mit->second << " ) in range." << endl;
 }
@@ -285,7 +291,7 @@ int main()
 	QTree *mainQTree = new QTree(0, 0, 1000, 1000);
 	Polygon *range = new Polygon(250, 250, 500, 500);
 	vector<Polygon*> *pv = new vector<Polygon*>;
-	map<int, int> *res = new map<int, int>;
+	multimap<int, int> *res = new multimap<int, int>;
 	srand(time(0));
 	createRandomPolygon(pv);
 	insertPoly2QTree(mainQTree, pv);
