@@ -1,4 +1,4 @@
 ﻿  PerformanceTest.cpp
-D:\Code Space\VS2019\PerformanceTest\PerformanceTest\PerformanceTest.cpp(295,12): warning C4244: '引數': 將 'time_t' 轉換為 'unsigned int'，由於類型不同，可能導致資料遺失
-D:\Code Space\VS2019\PerformanceTest\PerformanceTest\PerformanceTest.cpp(226): warning C4715: 'QTree::insert': 不是所有控制路徑都傳回值
+D:\Code Space\VS2019\PerformanceTest\PerformanceTest\PerformanceTest.cpp(345,12): warning C4244: '引數': 將 'time_t' 轉換為 'unsigned int'，由於類型不同，可能導致資料遺失
+D:\Code Space\VS2019\PerformanceTest\PerformanceTest\PerformanceTest.cpp(233): warning C4715: 'QTree::insert': 不是所有控制路徑都傳回值
   PerformanceTest.vcxproj -> D:\Code Space\VS2019\PerformanceTest\Debug\PerformanceTest.exe

@@ -3,43 +3,44 @@
 #include <time.h>
 #include <map>
 #include <vector>
+#include <chrono>
 
-#define POLYGON_NUM 20
-#define DEBUG 1
+#define POLYGON_NUM 1000
+#define DEBUG 0
 
 using namespace std;
 
 class Point {
 public:
 	Point() { x = 0; y = 0; }
-	Point* operator + (Point* p) {
+	Point* operator + (const Point &p) {
 		Point* res = new Point();
-		res->x = x + p->x;
-		res->y = y + p->y;
+		res->x = x + p.x;
+		res->y = y + p.y;
 		return res;
 	}
-	bool operator > (Point* p) {
-		if ((x > p->x) && (y > p->y))
+	bool operator > (const Point &p) {
+		if ((this->x > p.x) && (this->y > p.y))
 			return true;
 		return false;
 	}
-	bool operator < (Point* p) {
-		if ((x < p->x) && (y < p->y))
+	bool operator < (const Point &p) {
+		if ((this->x < p.x) && (this->y < p.y))
 			return true;
 		return false;
 	}
-	bool operator >= (Point* p) {
-		if ((x >= p->x) && (y >= p->y))
+	bool operator >= (const Point &p) {
+		if ((this->x >= p.x) && (this->y >= p.y))
 			return true;
 		return false;
 	}
-	bool operator <= (Point* p) {
-		if ((x <= p->x) && (y <= p->y))
+	bool operator <= (const Point &p) {
+		if ((this->x <= p.x) && (this->y <= p.y))
 			return true;
 		return false;
 	}
-	bool operator == (Point* p) {
-		if ((x = p->x) && (y = p->y))
+	bool operator == (const Point &p) {
+		if ((this->x = p.x) && (this->y = p.y))
 			return true;
 		return false;
 	}
@@ -165,27 +166,36 @@ public:
 		return boundary;
 	}
 	bool checkCollision(Point *p) {
-		Polygon* poly = getBoundary();
-		if (poly->getX() <= p->x && poly->getX() + poly->getWidth() >= p->x && poly->getY() <= p->y && poly->getY() + poly->getHeight() >= p->y)
+		Polygon* boundary = getBoundary();
+		if (*(boundary->getLeftTop()) <= *p && *(boundary->getRightBot()) >= *p)
 			return true;
 		return false;
 	}
 	bool checkCollision(Polygon *range) {
-		if (boundary->getLeftTop() <= range->getLeftTop() ||
-			(boundary->getX() + boundary->getWidth()) >= range->getLeftBot()->x ||
-			(boundary->getY() + boundary->getHeight()) >= range->getRightTop()->y ||
-			boundary->getRightBot() >= range->getRightBot())
+		if (*(boundary->getLeftTop()) <= *(range->getLeftTop()) && *(boundary->getRightBot()) >= *(range->getLeftTop()) ||
+			*(boundary->getLeftTop()) <= *(range->getLeftBot()) && *(boundary->getRightBot()) >= *(range->getLeftBot()) ||
+			*(boundary->getLeftTop()) <= *(range->getRightTop()) && *(boundary->getRightBot()) >= *(range->getRightTop()) ||
+			*(boundary->getLeftTop()) <= *(range->getRightBot()) && *(boundary->getRightBot()) >= *(range->getRightBot()))
 			return true;
-		if (range->getLeftTop() <= boundary->getLeftTop() ||
-			(range->getX() + range->getWidth()) >= boundary->getLeftBot()->x ||
-			(range->getY() + range->getHeight()) >= boundary->getRightTop()->y ||
-			range->getRightBot() >= boundary->getRightBot())
+		if (*(range->getLeftTop()) <= *(boundary->getLeftTop()) && *(range->getRightBot()) >= *(boundary->getLeftTop()) ||
+			*(range->getLeftTop()) <= *(boundary->getLeftBot()) && *(range->getRightBot()) >= *(boundary->getLeftBot()) ||
+			*(range->getLeftTop()) <= *(boundary->getRightTop()) && *(range->getRightBot()) >= *(boundary->getRightTop()) ||
+			*(range->getLeftTop()) <= *(boundary->getRightBot()) && *(range->getRightBot()) >= *(boundary->getRightBot()))
 			return true;
 
 		return false;
 	}
 	bool checkCollision(Polygon* range, Point *p) {
-		if (range->getX() <= p->x && range->getX() + range->getWidth() >= p->x && range->getY() <= p->y && range->getY() + range->getHeight() >= p->y)
+		if (*(range->getLeftTop()) <= *p && *(range->getRightBot()) >=*p) 
+			return true;
+
+		return false;
+	}
+	bool checkAllCover(Polygon *range) {
+		if (*(range->getLeftTop()) <= *(boundary->getLeftTop()) && *(range->getRightBot()) >= *(boundary->getLeftTop()) &&
+			*(range->getLeftTop()) <= *(boundary->getLeftBot()) && *(range->getRightBot()) >= *(boundary->getLeftBot()) &&
+			*(range->getLeftTop()) <= *(boundary->getRightTop()) && *(range->getRightBot()) >= *(boundary->getRightTop()) &&
+			*(range->getLeftTop()) <= *(boundary->getRightBot()) && *(range->getRightBot()) >= *(boundary->getRightBot()))
 			return true;
 		return false;
 	}
@@ -198,45 +208,45 @@ public:
 			objNumIncr();
 			return true;
 		}
-		else if (getObjNum() == getMaxObj() && level == 0) {
-			Polygon *boundary = getBoundary();
-			int x = boundary->getX();
-			int y = boundary->getY();
-			int w = boundary->getWidth();
-			int h = boundary->getHeight();
 
-			QTree *qt = new QTree(x, y, w/2, h/2);
-			QTree* qt2 = new QTree(x, y + (h / 2), w / 2, h / 2);
-			QTree* qt3 = new QTree(x + (w / 2), y, w / 2, h / 2);
-			QTree* qt4 = new QTree(x + (w / 2), y + (h / 2), w / 2, h / 2);
-			area->push_back(qt);
-			area->push_back(qt2);
-			area->push_back(qt3);
-			area->push_back(qt4);
-			level++;
-			return true;
-		}
-		else {
-			vector<QTree*>::iterator QtIt = area->begin();
-			for (; QtIt != area->end(); QtIt++) {
-				QTree *qt = *QtIt;
-				if (qt->insert(p)) return true;
-			}	
-		}
+		Polygon* boundary = getBoundary();
+		int x = boundary->getX();
+		int y = boundary->getY();
+		int w = boundary->getWidth();
+		int h = boundary->getHeight();
+
+		QTree* qt = new QTree(x, y, w / 2, h / 2);
+		QTree* qt2 = new QTree(x, y + (h / 2), w / 2, h / 2);
+		QTree* qt3 = new QTree(x + (w / 2), y, w / 2, h / 2);
+		QTree* qt4 = new QTree(x + (w / 2), y + (h / 2), w / 2, h / 2);
+		area->push_back(qt);
+		area->push_back(qt2);
+		area->push_back(qt3);
+		area->push_back(qt4);
+		level++;
+
+		vector<QTree*>::iterator QtIt = area->begin();
+		for (; QtIt != area->end(); QtIt++) {
+			QTree *qt = *QtIt;
+			if (qt->insert(p)) return true;
+		}	
 	}
-	void query(Polygon* range, multimap<int, int> *res) {
-		if (!checkCollision(range))
+	void query(Polygon* range, multimap<int, int> *res, bool cover) {
+		if (!cover && !checkCollision(range))
 			return;
+		if (checkAllCover(range))
+			cover = true;
+		
 		vector<Point*>::iterator pvIt = obj->begin();
 		for (; pvIt != obj->end() ; pvIt++ ) {
 			Point* p = *pvIt;
-			if (checkCollision(range, p))
+			if (cover || checkCollision(range, p))
 				res->insert(pair<int, int> {p->x, p->y});
 		}
 		vector<QTree*>::iterator qvIt = area->begin();
 		for (; qvIt != area->end(); qvIt++) {
 			QTree* qt = *qvIt;
-			qt->query(range, res);
+			qt->query(range, res, cover);
 		}
 	}
 private:
@@ -264,6 +274,7 @@ void createRandomPolygon(vector<Polygon*> *vp) {
 	cout << "==============================" << endl;
 	cout << "Create Random Polygon is Done!" << endl;
 	cout << "==============================" << endl;
+	cout << endl;
 }
 
 void insertPoly2QTree(QTree *qt, vector<Polygon*> *pv) {
@@ -278,6 +289,43 @@ void insertPoly2QTree(QTree *qt, vector<Polygon*> *pv) {
 	cout << "================================" << endl;
 	cout << "Insert Polygon to QTree is Done!" << endl;
 	cout << "================================" << endl;
+	cout << endl;
+}
+
+void insertPoly2Map(multimap<int, Polygon*> *mm, vector<Polygon*> *pv) {
+	vector<Polygon*>::iterator vpIt = pv->begin();
+	for (; vpIt != pv->end(); vpIt++) {
+		Polygon* poly = *vpIt;
+		mm->insert(pair<int, Polygon*>{poly->getLeftTop()->x, poly});
+	}
+	cout << "================================" << endl;
+	cout << "Insert Polygon to Map is Done!" << endl;
+	cout << "================================" << endl;
+	cout << endl;
+}
+
+bool checkCollision(Polygon* range, Point* p) {
+	if (*(range->getLeftTop()) <= *p && *(range->getRightBot()) >= *p)
+		return true;
+	return false;
+}
+
+void mapQuery(Polygon* range, multimap<int, Polygon*> *normalMap, multimap<int, int>* res) {
+	multimap<int, Polygon*>::iterator mapIt = normalMap->begin();
+	for (; mapIt != normalMap->end(); mapIt++) {
+		Polygon* poly = mapIt->second;
+		if (poly->getLeftTop()->x > range->getRightTop()->x)
+			break;
+
+		if (checkCollision(range, poly->getLeftTop()))
+			res->insert(pair<int, int> {poly->getLeftTop()->x, poly->getLeftTop()->y});
+		if (checkCollision(range, poly->getLeftBot()))
+			res->insert(pair<int, int> {poly->getLeftBot()->x, poly->getLeftBot()->y});
+		if (checkCollision(range, poly->getRightTop()))
+			res->insert(pair<int, int> {poly->getRightTop()->x, poly->getRightTop()->y});
+		if (checkCollision(range, poly->getRightBot()))
+			res->insert(pair<int, int> {poly->getRightBot()->x, poly->getRightBot()->y});
+	}
 }
 
 void showResults( multimap <int, int> *res) {
@@ -289,14 +337,38 @@ void showResults( multimap <int, int> *res) {
 int main()
 {
 	QTree *mainQTree = new QTree(0, 0, 1000, 1000);
-	Polygon *range = new Polygon(250, 250, 500, 500);
+	Polygon *range = new Polygon(750, 750, 250, 250);
 	vector<Polygon*> *pv = new vector<Polygon*>;
+	multimap<int, Polygon*> *normalMap = new multimap<int, Polygon*>;
 	multimap<int, int> *res = new multimap<int, int>;
+	multimap<int, int>* res2 = new multimap<int, int>;
 	srand(time(0));
 	createRandomPolygon(pv);
 	insertPoly2QTree(mainQTree, pv);
-	mainQTree->query(range, res);
+	insertPoly2Map(normalMap, pv);
+
+	auto begin = std::chrono::high_resolution_clock::now();
+
+	mainQTree->query(range, res, false);
+
+	auto end = std::chrono::high_resolution_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
+	printf("Time measured: %.3f seconds.\n", elapsed.count() * 1e-9);
 	showResults(res);
+
+	cout << endl;
+	cout << "============================" << endl;
+	cout << endl;
+
+	begin = std::chrono::high_resolution_clock::now();
+
+	mapQuery(range, normalMap, res2);
+
+	end = std::chrono::high_resolution_clock::now();
+	elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
+	printf("Time measured: %.3f seconds.\n\n", elapsed.count() * 1e-9);
+	showResults(res2);
+
 	cout << "============================" << endl;
 	cout << "Collision Detection is Done!" << endl;
 	cout << "============================" << endl;
